@@ -104,6 +104,9 @@
       aspect-ratio: 8.5 / 11;
       perspective: 2200px;
       position: relative;
+      background: #120f0c;
+      border-radius: 6px 14px 14px 6px;
+      overflow: hidden;
     }
 
     .page {
@@ -142,11 +145,16 @@
       box-shadow: none;
     }
 
-    .page.next { z-index: 1; }
-    .page.current { z-index: 20; }
+    .page.next { z-index: 2; }
+    .page.current { z-index: 3; }
     .page.prev {
-      z-index: 0;
+      z-index: 1;
       transform: rotateY(-180deg);
+    }
+    .page.hidden {
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 0 !important;
     }
 
     .shine {
@@ -315,16 +323,27 @@
     function applyClasses() {
       const list = [...book.children];
       list.forEach((el, i) => {
-        el.classList.remove("current", "next", "prev", "flipped");
-        if (i < index) {
-          el.classList.add("prev", "flipped");
-          el.style.zIndex = String(i);
-        } else if (i === index) {
+        el.className = "page";
+        el.style.zIndex = "";
+        el.style.visibility = "";
+
+        if (i === index) {
           el.classList.add("current");
-          el.style.zIndex = String(TOTAL + 5);
-        } else {
+          el.style.zIndex = "3";
+          el.style.visibility = "visible";
+        } else if (i === index + 1) {
           el.classList.add("next");
-          el.style.zIndex = String(TOTAL - i + 1);
+          el.style.zIndex = "2";
+          el.style.visibility = "visible";
+        } else if (i === index - 1) {
+          el.classList.add("prev", "flipped");
+          el.style.zIndex = "1";
+          el.style.visibility = "hidden";
+        } else {
+          el.classList.add(i < index ? "prev" : "next", "hidden");
+          if (i < index) el.classList.add("flipped");
+          el.style.zIndex = "0";
+          el.style.visibility = "hidden";
         }
       });
       [...thumbs.children].forEach((el, i) => {
@@ -341,10 +360,23 @@
       const list = [...book.children];
       const current = list[index];
       const upcoming = list[index + 1];
-      if (upcoming) upcoming.style.zIndex = String(TOTAL + 4);
-      current.style.zIndex = String(TOTAL + 5);
+
+      list.forEach((el, i) => {
+        if (el !== current && el !== upcoming) {
+          el.classList.add("hidden");
+          el.style.visibility = "hidden";
+          el.style.zIndex = "0";
+        }
+      });
+
+      upcoming.classList.remove("hidden");
+      upcoming.style.visibility = "visible";
+      upcoming.style.zIndex = "2";
+      current.style.visibility = "visible";
+      current.style.zIndex = "3";
       current.classList.add("flipped");
       index += 1;
+
       setTimeout(() => {
         applyClasses();
         flipping = false;
@@ -354,13 +386,32 @@
     function prev() {
       if (flipping || index <= 0) return;
       flipping = true;
+      const list = [...book.children];
+      const leaving = list[index];
+      const incoming = list[index - 1];
+
+      list.forEach((el) => {
+        if (el !== leaving && el !== incoming) {
+          el.classList.add("hidden");
+          el.style.visibility = "hidden";
+          el.style.zIndex = "0";
+        }
+      });
+
+      incoming.classList.remove("hidden");
+      incoming.classList.add("flipped");
+      incoming.style.visibility = "visible";
+      incoming.style.zIndex = "3";
+      leaving.style.visibility = "visible";
+      leaving.style.zIndex = "2";
       index -= 1;
-      applyClasses();
-      const current = book.querySelector(".current");
-      current.classList.add("flipped");
+
       requestAnimationFrame(() => {
-        current.classList.remove("flipped");
-        setTimeout(() => { flipping = false; }, 720);
+        incoming.classList.remove("flipped");
+        setTimeout(() => {
+          applyClasses();
+          flipping = false;
+        }, 720);
       });
     }
 
