@@ -143,9 +143,9 @@
     }
 
     .page.next { z-index: 1; }
-    .page.current { z-index: 3; }
+    .page.current { z-index: 20; }
     .page.prev {
-      z-index: 2;
+      z-index: 0;
       transform: rotateY(-180deg);
     }
 
@@ -316,9 +316,16 @@
       const list = [...book.children];
       list.forEach((el, i) => {
         el.classList.remove("current", "next", "prev", "flipped");
-        if (i < index) el.classList.add("prev", "flipped");
-        else if (i === index) el.classList.add("current");
-        else el.classList.add("next");
+        if (i < index) {
+          el.classList.add("prev", "flipped");
+          el.style.zIndex = String(i);
+        } else if (i === index) {
+          el.classList.add("current");
+          el.style.zIndex = String(TOTAL + 5);
+        } else {
+          el.classList.add("next");
+          el.style.zIndex = String(TOTAL - i + 1);
+        }
       });
       [...thumbs.children].forEach((el, i) => {
         el.classList.toggle("active", i === index);
@@ -331,7 +338,11 @@
     function next() {
       if (flipping || index >= TOTAL - 1) return;
       flipping = true;
-      const current = book.querySelector(".current");
+      const list = [...book.children];
+      const current = list[index];
+      const upcoming = list[index + 1];
+      if (upcoming) upcoming.style.zIndex = String(TOTAL + 4);
+      current.style.zIndex = String(TOTAL + 5);
       current.classList.add("flipped");
       index += 1;
       setTimeout(() => {
