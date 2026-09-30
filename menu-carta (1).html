@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menú · Carta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0b09;
+      --gold: #c9a56a;
+      --gold-soft: #e8d5a8;
+      --ink: #f4efe6;
+      --muted: #a39886;
+      --line: rgba(201, 165, 106, 0.28);
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(201, 165, 106, 0.12), transparent 55%),
+        radial-gradient(900px 500px at 90% 110%, rgba(201, 165, 106, 0.08), transparent 50%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Outfit", system-ui, sans-serif;
+    }
+
+    body { overflow-x: hidden; }
+
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .brand small {
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-size: 11px;
+    }
+
+    .brand h1 {
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 500;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 0.95;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #1d1a15, #14120e);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 11px 16px;
+      font: inherit;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: 0.25s ease;
+    }
+
+    button:hover {
+      border-color: var(--gold);
+      color: var(--gold-soft);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    .book-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .letter {
+      width: min(92vw, 540px);
+      aspect-ratio: 8.5 / 11;
+      perspective: 2200px;
+      position: relative;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      border-radius: 6px 14px 14px 6px;
+      overflow: hidden;
+      background: #1a1713;
+      box-shadow: var(--shadow), inset -18px 0 28px rgba(0,0,0,.18);
+      transform-origin: left center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transition: transform 0.9s cubic-bezier(.22,.8,.28,1);
+      transform: rotateY(0deg);
+    }
+
+    .page img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .page.missing {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .page.flipped {
+      transform: rotateY(-180deg);
+      box-shadow: none;
+    }
+
+    .page.next { z-index: 1; }
+    .page.current { z-index: 3; }
+    .page.prev {
+      z-index: 2;
+      transform: rotateY(-180deg);
+    }
+
+    .shine {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.08) 48%, transparent 56%);
+      mix-blend-mode: screen;
+    }
+
+    .controls {
+      margin-top: 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .page-indicator {
+      min-width: 92px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: rgba(22, 20, 16, 0.72);
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .panel h3 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 28px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .panel p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .thumbs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 10px;
+    }
+
+    .thumb {
+      aspect-ratio: 8.5 / 11;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      background: #1a1713;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumb.active { outline: 2px solid var(--gold); }
+
+    @media (min-width: 980px) {
+      .stage { grid-template-columns: 1.15fr 0.85fr; align-items: start; }
+      .letter { width: min(100%, 560px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <small>Carta digital</small>
+        <h1>Menú</h1>
+      </div>
+      <button id="fsBtn" type="button">Pantalla completa</button>
+    </header>
+
+    <div class="stage">
+      <div class="book-wrap">
+        <div class="letter" id="book" aria-label="Libro del menú"></div>
+        <div class="controls">
+          <button id="prevBtn" type="button">Anterior</button>
+          <div class="page-indicator" id="indicator">1 / 9</div>
+          <button id="nextBtn" type="button">Siguiente</button>
+        </div>
+        <p class="hint">Coloca en esta misma carpeta: 1.jpg, 2.jpg … 9.jpg. Clic, flechas o desliza para pasar página.</p>
+      </div>
+
+      <aside class="panel">
+        <h3>Páginas</h3>
+        <p>El menú carga automáticamente las 9 hojas de la carpeta.</p>
+        <div class="thumbs" id="thumbs"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 9;
+    const book = document.getElementById("book");
+    const thumbs = document.getElementById("thumbs");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const fsBtn = document.getElementById("fsBtn");
+    const indicator = document.getElementById("indicator");
+
+    let index = 0;
+    let flipping = false;
+
+    function pageSrc(n) {
+      return n + ".jpg";
+    }
+
+    function renderBook() {
+      book.innerHTML = "";
+      thumbs.innerHTML = "";
+
+      for (let i = 1; i <= TOTAL; i++) {
+        const page = document.createElement("div");
+        page.className = "page";
+        const img = document.createElement("img");
+        img.alt = "Página " + i;
+        img.src = pageSrc(i);
+        img.addEventListener("error", () => {
+          page.classList.add("missing");
+          page.innerHTML = "<span>Falta " + i + ".jpg en esta carpeta</span><div class=\"shine\"></div>";
+        });
+        page.appendChild(img);
+        const shine = document.createElement("div");
+        shine.className = "shine";
+        page.appendChild(shine);
+        page.addEventListener("click", (e) => {
+          const rect = page.getBoundingClientRect();
+          if (e.clientX > rect.left + rect.width / 2) next();
+          else prev();
+        });
+        book.appendChild(page);
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb";
+        thumb.innerHTML = "<img alt=\"Miniatura " + i + "\" src=\"" + pageSrc(i) + "\">";
+        thumb.addEventListener("click", () => {
+          index = i - 1;
+          applyClasses();
+        });
+        thumbs.appendChild(thumb);
+      }
+
+      applyClasses();
+    }
+
+    function applyClasses() {
+      const list = [...book.children];
+      list.forEach((el, i) => {
+        el.classList.remove("current", "next", "prev", "flipped");
+        if (i < index) el.classList.add("prev", "flipped");
+        else if (i === index) el.classList.add("current");
+        else el.classList.add("next");
+      });
+      [...thumbs.children].forEach((el, i) => {
+        el.classList.toggle("active", i === index);
+      });
+      indicator.textContent = (index + 1) + " / " + TOTAL;
+      prevBtn.disabled = index <= 0;
+      nextBtn.disabled = index >= TOTAL - 1;
+    }
+
+    function next() {
+      if (flipping || index >= TOTAL - 1) return;
+      flipping = true;
+      const current = book.querySelector(".current");
+      current.classList.add("flipped");
+      index += 1;
+      setTimeout(() => {
+        applyClasses();
+        flipping = false;
+      }, 720);
+    }
+
+    function prev() {
+      if (flipping || index <= 0) return;
+      flipping = true;
+      index -= 1;
+      applyClasses();
+      const current = book.querySelector(".current");
+      current.classList.add("flipped");
+      requestAnimationFrame(() => {
+        current.classList.remove("flipped");
+        setTimeout(() => { flipping = false; }, 720);
+      });
+    }
+
+    fsBtn.addEventListener("click", () => {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    });
+
+    let startX = null;
+    book.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    book.addEventListener("touchend", (e) => {
+      if (startX == null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (dx < -40) next();
+      if (dx > 40) prev();
+      startX = null;
+    });
+
+    renderBook();
+  </script>
+</body>
+</html>
